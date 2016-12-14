@@ -29,28 +29,55 @@ library(maps)
 ```
 ## Abstract
 
-In this report I will explore North Carolina's presidential campaign contributions within the 2016 election year. The goals of this report will be to understand the demographics and locations of contributors and look for interesting relationships in the data. 
+In this report I will explore North Carolina's presidential campaign 
+contributions within the 2016 election year. The goals of this report will be to 
+understand the demographics and locations of contributors and look for 
+interesting relationships in the data. 
 
 ## Introduction
 
-In 1975, Congress created the Federal Election Commission (FEC) to administer and enforce the Federal Election Campaign Act (FECA) - the statute that governs the financing of federal elections. The duties of the FEC, which is an independent regulatory agency, are to disclose campaign finance information, to enforce the provisions of the law such as the limits and prohibitions on contributions, and to oversee the public funding of Presidential elections. The FEC maintains a website with many different databases related to campaign finance.
+In 1975, Congress created the Federal Election Commission (FEC) to administer 
+and enforce the Federal Election Campaign Act (FECA) - the statute that governs 
+the financing of federal elections. The duties of the FEC, which is an 
+independent regulatory agency, are to disclose campaign finance information, to 
+enforce the provisions of the law such as the limits and prohibitions on 
+contributions, and to oversee the public funding of Presidential elections. The 
+FEC maintains a website with many different databases related to campaign 
+finance.
 
-The presidential campaign contribution data is located here: http://fec.gov/disclosurep/PDownload.do
+The presidential campaign contribution data is located here: 
+http://fec.gov/disclosurep/PDownload.do
 
-The file format for this dataset is located here: ftp://ftp.fec.gov/FEC/Presidential_Map/2016/DATA_DICTIONARIES/CONTRIBUTOR_FORMAT.txt
+The file format for this dataset is located here: 
+ftp://ftp.fec.gov/FEC/Presidential_Map/2016/DATA_DICTIONARIES/CONTRIBUTOR_FORMAT.txt
 
-I will explore the dataset and look for comminalities among the campaign contributors within the state of North Carolina. I would look at contribution amounts broken down by the locations within the state, as well as the particular candidates supported by each location. I will also explore the demographics of the campaign contributors for each presidential nominee. This election was a historical year in that it was the first time a female presidential candidate (Hilary Clinton) became a nominee of a major political party. I will explore the breakdown of Hilary Clinton contributions by gender to see if there are any interesting correlations.
+I will explore the dataset and look for comminalities among the campaign 
+contributors within the state of North Carolina. I would look at contribution 
+amounts broken down by the locations within the state, as well as the particular 
+candidates supported by each location. I will also explore the demographics of 
+the campaign contributors for each presidential nominee. This election was a 
+historical year in that it was the first time a female presidential candidate 
+(Hilary Clinton) became a nominee of a major political party. I will explore the 
+breakdown of Hilary Clinton contributions by gender to see if there are any 
+interesting correlations.
 
 ## Summary of the Dataset
 
-I imported the dataset 'P00000001-NC.csv' into a data frame named <b>'cc'</b> which stands for <b>c</b>ampaign <b>c</b>ontributions.
+I imported the dataset 'P00000001-NC.csv' into a data frame named <b>'cc'</b> 
+which stands for <b>c</b>ampaign <b>c</b>ontributions.
+
 ```{r echo=TRUE, load_data}
-cc <- read.csv('/Users/aehsaei/Documents/DataAnalyst/Project_4/P00000001-NC.csv', row.names=NULL)
+cc <- read.csv('/Users/aehsaei/Documents/DataAnalyst/Project_4/P00000001-NC.csv', 
+               row.names = NULL)
 ```
 
 Here is the basic structure of the 'cc' dataset:
+
 ```{r echo=FALSE, structure}
+# Remove the extra empty column when csv was read in using row.names = NULL
 cc$X <- NULL
+
+# print the structure of the new dataframe
 str(cc, vec.len = 1, strict.width = "cut", indent.str = "  " )
 ```
 The dataset contains 19 variables and over 130,000 observations.
@@ -78,18 +105,27 @@ The dataset contains 19 variables and over 130,000 observations.
 
 ## Tidy Data
 
-Let's take a closer look at some of the data frame variables and clean the data where needed. I expect there to be typos and spelling errors in the data. I also expect there to be missing data fields, which can be excluded from analysis.
+Let's take a closer look at some of the data frame variables and clean the data 
+where needed. I expect there to be typos and spelling errors in the data. I also 
+expect there to be missing data fields, which can be excluded from analysis.
 
 <br />
 
 ##### contbr_zip: contributor zip code
-First let's look at the zip codes to make sure they all reside within North Carolina. The first three digits of North Carolina zip codes range from 270 to 289. Let's see a summary of the zip code data.
+First let's look at the zip codes to make sure they all reside within North 
+Carolina. The first three digits of North Carolina zip codes range from 270 to 
+289. Let's see a summary of the zip code data.
 
 ```{r echo=FALSE, zip_code_summary}
 summary(cc$contbr_zip)
 ```
 
-We can see there are some zip codes with '0' and 'NA' values so I'll remove these from the dataset. The zip code variable is a numerical type at the moment, but it makes more sense for this variable to be a factor type since each zip code represents a region of the state. I also noticed that the zip codes contain both standard formats (5 digit and 9 digit). Let's standardize the zip codes to the 5 digit format as well.
+We can see there are some zip codes with '0' and 'NA' values so I'll remove 
+these from the dataset. The zip code variable is a numerical type at the moment, 
+but it makes more sense for this variable to be a factor type since each zip 
+code represents a region of the state. I also noticed that the zip codes contain 
+both standard formats (5 digit and 9 digit). Let's standardize the zip codes to 
+the 5 digit format as well.
 
 ```{r echo=TRUE, zip_code_tidy}
 # Remove any digits after the 5th digit
@@ -110,7 +146,8 @@ summary(cc$contbr_zip, maxsum = 9)
 <br />
 
 ##### contbr_occupation: contributor occupation
-Next let's clean up elements in the dataset with unusable occupation data. First, let's look at the top 20 contributors' occupations. 
+Next let's clean up elements in the dataset with unusable occupation data. 
+First, let's look at the top 20 contributors' occupations. 
 
 ```{r echo=TRUE, occupations_summary}
 # Group the occupations and show the top 20 most common
@@ -121,7 +158,9 @@ cc %>%
   head(20)
 ```
 
-We can see some occupations that we can exclude from analysis such as "INFORMATION REQUESTED," "INFORMATION REQUESTED PER BEST EFFORTS," and an empty field. Let's filter these and look at the top 20 again.
+We can see some occupations that we can exclude from analysis such as 
+"INFORMATION REQUESTED," "INFORMATION REQUESTED PER BEST EFFORTS," and an empty 
+field. Let's filter these and look at the top 20 again.
 
 ```{r echo=TRUE, occupations_tidy}
 # Subset the data by removing occupations with missing information
@@ -134,25 +173,35 @@ cc <- subset(cc, cc$contbr_occupation != "INFORMATION REQUESTED" &
 cc$contbr_occupation <- gsub("REGISTERED NURSE", "RN", cc$contbr_occupation)
 
 # Group the occupations again and show the top 20 most common
-top_contributing_occupations <- cc %>%
+top_contrib_occupations <- cc %>%
   group_by(contbr_occupation) %>%
   summarise(n = n()) %>%
   arrange(desc(n))
 
 # Show the top 20
-head(top_contributing_occupations, 20)
+head(top_contrib_occupations, 20)
 ```
 
 <br />
 
 #### contb_receipt_amt: contribution receipt amount
-Let's next check that the contribution data falls within the expected range allowed for the 2016 election. According to the FEC, an individual may give a maximum of $2,700 per election to a Federal candidate or the candidate's campaign committee. The primary and general elections count as separately, therefore individuals may contribute $5,400 per candidate per cycle and couples may contribute $10,800. I should expect to see a range of values that makes sense in these bounds. Let's first look at the summary of the receipt amounts. 
+Let's next check that the contribution data falls within the expected range 
+allowed for the 2016 election. According to the FEC, an individual may give a 
+maximum of $2,700 per election to a Federal candidate or the candidate's 
+campaign committee. The primary and general elections count as separately, 
+therefore individuals may contribute $5,400 per candidate per cycle and couples 
+may contribute $10,800. I should expect to see a range of values that makes 
+sense in these bounds. Let's first look at the summary of the receipt amounts. 
 
 ```{r echo=FALSE, contributions_summary}
 summary(cc$contb_receipt_amt)
 ```
 
-Looking at the summary data from the contribution amounts, we can see a minimum value that doesn't make sense. The minimum value in this column is a negative number (-5,400). Looking at the corresponding memo text we can see there are refunds listed in the dataset. I will remove all refund contributions from this dataset.
+Looking at the summary data from the contribution amounts, we can see a minimum 
+value that doesn't make sense. The minimum value in this column is a negative 
+number (-5,400). Looking at the corresponding memo text we can see there are 
+refunds listed in the dataset. I will remove all refund contributions from this 
+dataset.
 
 ```{r echo=TRUE, contributions_tidy}
 # Subset the data by removing contributions less than 0
@@ -162,66 +211,107 @@ summary(cc$contb_receipt_amt)
 
 ## Add Variables
 
-There are a few variables that are not currently present in the dataset that I would like to add to the 'cc' data frame. I would like to add candidate gender, contributor gender, candidate political party affiliation, and contributor latitude/logitude coordinates (for map-plotting).
+There are a few variables that are not currently present in the dataset that I 
+would like to add to the 'cc' data frame. I would like to add candidate gender, 
+contributor gender, candidate political party affiliation, and contributor 
+latitude/logitude coordinates (for map-plotting).
 
 <br />
 
 #### Gender
-There is an 'R' package available from CRAN named 'gender' which can be used to predict gender using first names and dates of birth using historical datasets. The 'cc' dataframe currently has a single field for contributor name and a single field for candidate name. I will break out the first and last names of each into separate variables named 'cand_first_nm,' 'cand_last_nm,' contbr_first_nm,' and 'contbr_last_nm.'
+There is an 'R' package available from CRAN named 'gender' which can be used to 
+predict gender using first names and dates of birth using historical datasets. 
+The 'cc' dataframe currently has a single field for contributor name and a 
+single field for candidate name. I will break out the first and last names of 
+each into separate variables named 'cand_first_nm,' 'cand_last_nm,' 
+contbr_first_nm,' and 'contbr_last_nm.'
 
 ```{r echo=TRUE, names_tidy}
 # Candidate First/Last Name
-cc <- separate(cc, cand_nm, sep = ",", into = c("cand_last_nm", "cand_first_nm"), remove = FALSE)
+cc <- separate(cc, 
+               cand_nm, sep = ",", 
+               into = c("cand_last_nm", "cand_first_nm"), 
+               remove = FALSE)
 
 # Remove any middle name or prefix/suffix and trim whitespace
 cc$cand_first_nm <- trimws(cc$cand_first_nm, which = c("both"))
 cc$cand_first_nm <- sub(" .*", "", cc$cand_first_nm)
 
 # Contributor First/Last Name
-cc <- separate(cc, contbr_nm, sep = ",", into = c("contbr_last_nm", "contbr_first_nm"), remove = FALSE, extra = "drop")
+cc <- separate(cc, 
+               contbr_nm, sep = ",", 
+               into = c("contbr_last_nm", "contbr_first_nm"), 
+               remove = FALSE, 
+               extra = "drop")
 
 # Remove any middle name or prefix/suffix and trim whitespace
 cc$contbr_first_nm <- trimws(cc$contbr_first_nm, which = c("both"))
 cc$contbr_first_nm <- sub(" .*", "", cc$contbr_first_nm)
 
-# Replace candidate "Raphael Cruz" first name with his commonly known first name "Ted"
+# Change candidate "Raphael (Cruz)" to his commonly-known first name "Ted"
 cc$cand_first_nm <- sub("Rafael", "Ted", cc$cand_first_nm)
 ```
 
-Now that we have the names separated into first and last names, we can pass in these values to the built in method within the 'gender' package to predict gender based on the name.
+Now that we have the names separated into first and last names, we can pass in 
+these values to the built in method within the 'gender' package to predict 
+gender based on the name.
 
 ```{r echo=TRUE, candidate_gender_tidy}
 # Create a candidate gender data frame
-cand_gender_df <- gender_df(data = data_frame(names = cc$cand_first_nm, min_year = 1940, max_year = 1970), 
+cand_gender_df <- gender_df(data = data_frame(names = cc$cand_first_nm, 
+                                              min_year = 1940, 
+                                              max_year = 1970), 
                             year_col = c("min_year", "max_year"), 
                             name_col = "names")
 
 # Reduce the candidate gender data frame to only name and gender
-cand_gender_df <- data.frame("cand_name" = cand_gender_df$name, "cand_gender" = cand_gender_df$gender)
+cand_gender_df <- data.frame("cand_name" = cand_gender_df$name, 
+                             "cand_gender" = cand_gender_df$gender)
 
 # Merge the candidate gender data frame and the main data frame
-cc <- merge(cc, cand_gender_df, by.x = "cand_first_nm", by.y = "cand_name")
+cc <- merge(cc, 
+            cand_gender_df, 
+            by.x = "cand_first_nm", 
+            by.y = "cand_name")
+```
+
+Here is a plot to show the breakdown of genders among the candidates:
+
+```{r, echo = FALSE, candidate_gender_plot_basic}
+ggplot(data = cand_gender_df, aes(x = cand_gender)) +
+  geom_dotplot(aes(fill = cand_gender), binwidth = .09) +
+  xlab("Candidate Gender") +
+  ggtitle("Proportion of Genders Among Candidates") +
+  guides(fill=guide_legend(title="Candidate Gender"))
 ```
 
 Let's repeat the same process for the contributors.
 
 ```{r echo=TRUE, contributor_gender_tidy}
 # Create a contributor gender data frame
-contbr_gender_df <- gender_df(data = data_frame(names = cc$contbr_first_nm, min_year = 1940, max_year = 1970), 
+contbr_gender_df <- gender_df(data = data_frame(names = cc$contbr_first_nm, 
+                                                min_year = 1940, 
+                                                max_year = 1970), 
                             year_col = c("min_year", "max_year"), 
                             name_col = "names")
 
 # Reduce the contributor gender data frame to only name and gender
-contbr_gender_df <- data.frame("contbr_name" = contbr_gender_df$name, "contbr_gender" = contbr_gender_df$gender)
+contbr_gender_df <- data.frame("contbr_name" = contbr_gender_df$name, 
+                               "contbr_gender" = contbr_gender_df$gender)
 
 # Merge the contributor gender data frame and the main data frame
-cc <- merge(cc, contbr_gender_df, by.x = "contbr_first_nm", by.y = "contbr_name")
+cc <- merge(cc, 
+            contbr_gender_df, 
+            by.x = "contbr_first_nm", 
+            by.y = "contbr_name")
 ```
 
 <br />
 
 #### Party Affiliation
-Next, I will create a variable to assign the political party affiliation to each candidate. I created the political party data frame manually and then merged it wil the main 'cc' data frame.
+Next, I will create a variable to assign the political party affiliation to each 
+candidate. I created the political party data frame manually and then merged it 
+wil the main 'cc' data frame.
 
 ```{r echo=TRUE, candidate_party_tidy}
 # Create a new data frame to be used as a key
@@ -246,10 +336,33 @@ cand_df$cand_party[cand_df$cand_last_nm == "McMullin"] <- "independent"
 cc <- merge(cc, cand_df, by.x = "cand_last_nm", by.y = "cand_last_nm")
 ```
 
+Here is a plot of the candidates who represent each political party in our data:
+
+```{r echo = FALSE, candidate_party_plot_basic}
+ggplot(data = cand_df, aes(x = cand_party)) +
+  geom_dotplot(aes(fill = cand_party), binwidth = .25) +
+  scale_fill_manual(values = c(I("#3498DB"), 
+                               I("#27AE60"), 
+                               "grey", 
+                               "black", 
+                               I('#E74C3C'))) +
+  xlab("Candidate Party") +
+  ggtitle("Proportion of Party Affiliation Among Candidates") +
+  guides(fill=guide_legend(title="Candidate Party"))
+```
+
+We can see there are far more republican candidates than any of the other major
+political parties. 
+
 <br />
 
 #### Latitude Longitude Coordinates
-Lastly, I will add latitude and logitude coordinates using the 'cc' zip codes. I'll use the latitude and logitude coordinates to plot areas on a map in my analysis. To calculate the latitude and logitude based on the zip code, I will use the CRAN package named 'zipcode.' This package contains a database of city, state, latitude, and longitude information for U.S. ZIP codes from the CivicSpace Database (August 2004).
+Lastly, I will add latitude and logitude coordinates using the 'cc' zip codes. 
+I'll use the latitude and logitude coordinates to plot areas on a map in my 
+analysis. To calculate the latitude and logitude based on the zip code, I will 
+use the CRAN package named 'zipcode.' This package contains a database of city, 
+state, latitude, and longitude information for U.S. ZIP codes from the 
+CivicSpace Database (August 2004).
 
 ```{r echo=TRUE, lat_long_tidy}
 data(zipcode)
@@ -258,14 +371,22 @@ cc <- merge(cc, zipcode, by.x = "contbr_zip", by.y = "zip")
 
 <br />
 
-After data cleansing and additional variables, the 'cc' data frame has the following structure:
+After data cleansing and additional variables, the 'cc' data frame has the 
+following structure:
+
 ```{r echo=FALSE, structure_tidy}
 # Remove these columns, not needed
 cc$city <- NULL
 cc$state <- NULL
 
 # Reorder the columns so that related things are adjacent
-cc <- cc[c("cmte_id", "cand_id", "cand_nm", "cand_first_nm", "cand_last_nm", "cand_gender", "cand_party", "contbr_nm", "contbr_first_nm", "contbr_last_nm", "contbr_gender", "contbr_occupation", "contbr_employer", "contb_receipt_amt", "contb_receipt_dt", "contbr_city", "contbr_st", "contbr_zip", "latitude", "longitude", "receipt_desc", "election_tp", "memo_cd", "memo_text", "form_tp", "file_num", "tran_id")]
+cc <- cc[c("cmte_id", "cand_id", "cand_nm", "cand_first_nm", "cand_last_nm", 
+           "cand_gender", "cand_party", "contbr_nm", "contbr_first_nm", 
+           "contbr_last_nm", "contbr_gender", "contbr_occupation", 
+           "contbr_employer", "contb_receipt_amt", "contb_receipt_dt", 
+           "contbr_city", "contbr_st", "contbr_zip", "latitude", "longitude", 
+           "receipt_desc", "election_tp", "memo_cd", "memo_text", "form_tp", 
+           "file_num", "tran_id")]
 
 # Change the character data types to factor data types for better analysis
 cc$cand_first_nm <- as.factor(cc$cand_first_nm)
@@ -310,7 +431,9 @@ The dataset contains 27 variables and over 120,000 observations.
 | tran_id           | transaction id                            |
 
 ## Analysis
-Now that we have clean dataset, we can start exploring some of the data. Let's first take a look at the candidates. Let's see how many different candidates received campaign contributions from North Carolinians in 2016.
+Now that we have clean dataset, we can start exploring some of the data. Let's 
+first take a look at the candidates. Let's see how many different candidates 
+received campaign contributions from North Carolinians in 2016.
 
 ```{r echo=TRUE, candidates}
 # Group candidates by name and total contributions
@@ -326,10 +449,14 @@ summary(candidates)
 length(candidates$cand_nm)
 ```
 
-There were 23 presidential candidates that received contributions from North Carolina in 2016. The smallest amount of contributions to a candidate was 5 and the largest amount of contributions was just over 50 thousand. The mean number of contributions to a candidate is around 5 thousand.
+There were 23 presidential candidates that received contributions from North 
+Carolina in 2016. The smallest amount of contributions to a candidate was 5 and 
+the largest amount of contributions was just over 50 thousand. The mean number 
+of contributions to a candidate is around 5 thousand.
 
 ### Who are the 2016 presidential candidates?
-Let's plot the candidates and number of contributions using a barplot and color the bars based on political party.
+Let's plot the candidates and number of contributions using a barplot and color 
+the bars based on political party.
 
 ```{r echo=FALSE, candidates_plot}
 ggplot(data = cc, aes(x = cand_last_nm, fill = cand_party)) +
@@ -338,25 +465,40 @@ ggplot(data = cc, aes(x = cand_last_nm, fill = cand_party)) +
   xlab("Candidates") +
   ylab("Number of Contributions") +
   theme(text = element_text(size=12),
-        axis.text.x = element_text(angle=45, hjust=1))
+        axis.text.x = element_text(angle=45, hjust=1)) +
+  guides(fill=guide_legend(title="Candidate Party"))
 ```
 
-There are a handful of candidates that clearly received the majority of the contributions. I'll replot the data and only focus in on candidates that received over a thousand contributions. This will allow us to focus on the candidates that received most of the contributions.
+There are a handful of candidates that clearly received the majority of the 
+contributions. I'll replot the data and only focus in on candidates that 
+received over a thousand contributions. This will allow us to focus on the 
+candidates that received most of the contributions.
 
 ```{r echo=FALSE, candidates_plot_over_1000}
-ggplot(data = subset(cc, table(cand_last_nm)[cand_last_nm] > 1000), aes(x = cand_last_nm, fill = cand_party)) +
+ggplot(data = subset(cc, table(cand_last_nm)[cand_last_nm] > 1000), 
+       aes(x = cand_last_nm, fill = cand_party)) +
   geom_bar(color = I("black")) +
-  scale_fill_manual(values=c(I("#3498DB"),I('#E74C3C'), "grey", "black","grey")) +
-  xlab("Candidates with > 1000 Contributions") +
+  scale_fill_manual(values = c(I("#3498DB"), 
+                               I('#E74C3C'), 
+                               "green", 
+                               "black",
+                               "grey")) +
+  ggtitle("Candidates with > 1000 Contributions") +
+  xlab("Candidates") +
   ylab("Number of Contributions") +
-  theme(text = element_text(size=18),
-        axis.text.x = element_text(angle=45, hjust=1))
+  theme(text = element_text(size = 18),
+        axis.text.x = element_text(angle = 45, hjust = 1)) +
+  guides(fill=guide_legend(title="Party"))
 ```
 
-Here we can see that Clinton and Sanders received the most contributions by far. Both of these candidates received more than twice the number of contributions as the next candidate in this plot. It also looks like the democratic candidates received many more contributions than the republican candidates. 
+Here we can see that Clinton and Sanders received the most contributions by far. 
+Both of these candidates received more than twice the number of contributions as 
+the next candidate in this plot. It also looks like the democratic candidates 
+received many more contributions than the republican candidates. 
 
 ### Which party received the most contributions?
-Let's take a look at the total number of contributions to the democratic and republic parties.
+Let's take a look at the total number of contributions to the democratic and 
+republican parties.
 
 ```{r echo=FALSE, parties_plot}
 ggplot(data = subset(cc, cand_party == "democrat" | cand_party == "republican"), 
@@ -367,25 +509,40 @@ ggplot(data = subset(cc, cand_party == "democrat" | cand_party == "republican"),
   theme(text = element_text(size=18))
 ```
 
-We can see the democratic candidates received over twice as many contributions as the republican candidates. This is not the total amount of money contributed to the party candidates, only the total amount of contributions.
+We can see the democratic candidates received over twice as many contributions 
+as the republican candidates. This is not the total amount of money contributed 
+to the party candidates, only the total amount of contributions.
 
 ### Which party received the most money?
-The amount of money in each contribution can vary up to $2,700 (upper limit for individual contributors), so the party that received the most amount of contributions does not neccessarily mean that it received the most money in total. Let's calculate the total amount of money contributed to each of the party candidates.
+The amount of money in each contribution can vary up to $2,700 (upper limit for 
+individual contributors), so the party that received the most amount of 
+contributions does not neccessarily mean that it received the most money in 
+total. Let's calculate the total amount of money contributed to each of the 
+party candidates.
 
 ```{r echo=TRUE, parties_contribution_totals}
 # Calculate the total contribution amounts for each party
-partycontribution_amt <- aggregate(cc$contb_receipt_amt, by = list(cc$cand_party), FUN = sum) %>%
+partycontribution_amt <- aggregate(cc$contb_receipt_amt, 
+                                   by = list(cc$cand_party), 
+                                   FUN = sum) %>%
   arrange(desc(x))
 
 # Rename the column headers
-partycontribution_amt <- rename(partycontribution_amt, c("Group.1" = "party", "x" = "dollars"))
+partycontribution_amt <- rename(partycontribution_amt, c("Group.1" = "party", 
+                                                         "x" = "dollars"))
 partycontribution_amt
 ```
 
-So we can see that democrats did in fact receive the most contribution dollars, but not by the margin that the previous contribution plot indicated. The republican contributors must have contributed higher amounts than the democrats in order to close the gap between the number of contributions and contribution amounts. 
+So we can see that democrats did in fact receive the most contribution dollars, 
+but not by the margin that the previous contribution plot indicated. The 
+republican contributors must have contributed higher amounts than the democrats 
+in order to close the gap between the number of contributions and contribution 
+amounts. 
 
 ### Which party received the highest average contribution?
-Let's calculate the average contribution amount for each of the parties and see if the republican contributors did in fact contribute higher amounts over democrats on average.
+Let's calculate the average contribution amount for each of the parties and see 
+if the republican contributors did in fact contribute higher amounts over 
+democrats on average.
 
 ```{r echo=TRUE, average_party_contribution}
 cc %>%
@@ -394,36 +551,82 @@ cc %>%
   arrange(desc(mean_contribution))
 ```
 
-The results here are a little surprising. The highest average contribution was to libertarian candidates. The part that was not surprising was that republican contributors on average donated about twice as much as the democrat contributors. The republican contributors must have donated more on average for the previous plots to make sense, since we saw that there were a lot more contributions to democratic candidates but the total dollar amount was not much larger. Next, let's take a closer look at the contribution amounts.
+The results here are a little surprising. The highest average contribution was 
+to libertarian candidates. The part that was not surprising was that republican 
+contributors on average donated about twice as much as the democrat contributors. 
+The republican contributors must have donated more on average for the previous 
+plots to make sense, since we saw that there were a lot more contributions to 
+democratic candidates but the total dollar amount was not much larger. Next, 
+let's take a closer look at the contribution amounts.
 
 ```{r echo=FALSE, contribution_amounts_plot}
-ggplot(data = subset(cc, contb_receipt_amt <= 2700), aes(x = contb_receipt_amt)) +
+ggplot(data = subset(cc, contb_receipt_amt <= 2700), 
+       aes(x = contb_receipt_amt)) +
   geom_histogram(binwidth = 10, fill = I('#27AE60'), color = I('#27AE60')) +
-  scale_x_continuous(breaks = seq(0, 3000, by = 500), "Contributions in dollars")
+  scale_x_continuous(breaks = seq(0, 3000, by = 500), 
+                     "Contributions in dollars")
 ```
 
-We can see the majority of the contributions were well under the contribution limit of $2,700 (for individuals). There are some amounts of contributions at the $500, $1000 marks, but most of the contributions are under the $500 mark. Let's look at a plot of the contributions to each party to see if we can notice a difference in the frequencies of contirbution amounts.
+We can see the majority of the contributions were well under the contribution 
+limit of $2,700 (for individuals). There are some amounts of contributions at 
+the $500, $1000 marks, but most of the contributions are under the $500 mark. 
+Let's look at a plot of the contributions to each party to see if we can notice 
+a difference in the frequencies of contirbution amounts.
 
 ```{r echo=FALSE, side_by_side_party_contributions_plot}
 ggplot() +
-  geom_histogram( data = subset(cc, contb_receipt_amt <= 2700), aes(x = contb_receipt_amt, fill = cand_party), binwidth = .6, position = "dodge") +
-  scale_fill_manual(values=c(I("#3498DB"), I("#27AE60"), "grey", "black", I('#E74C3C'))) +
-  scale_x_log10() +
-  xlab("Contributions in dollars (log10)")
+  geom_histogram( data = subset(cc, contb_receipt_amt <= 2700), 
+                  aes(x = contb_receipt_amt, fill = cand_party), 
+                  binwidth = .6, 
+                  position = "dodge") +
+  scale_fill_manual(values = c(I("#3498DB"), 
+                               I("#27AE60"), 
+                               "grey", 
+                               "black", 
+                               I('#E74C3C'))) +
+  scale_x_log10(breaks = c(1, 3, 10, 30, 100, 300, 1000)) +
+  xlab("Contributions in dollars") +
+  ggtitle("Contributions on a log10 Scale") +
+  guides(fill=guide_legend(title="Candidate Party"))
 ```
 
-I plotted the party contributions using a log10 scale to focus on the location of the peak of each plot and see the shape of the plots relative to each other. We can see that only the democrat and republican parties show significant sized bars on this chart. The other parties did not receive nearly as many contributions. There are very tiny bars centered around the 100 mark, but the major players in this comparison are the republican and democrat parties. Between these two, it is clear that the democrat party received a larger number of contributions at a lower amount, and the republican contribution amounts peak at a higher value. Both plots are normally-shaped after performing the log10 scale transformation along the x axis. 
+I plotted the party contributions using a log10 scale to focus on the location 
+of the peak of each plot and see the shape of the plots relative to each other. 
+We can see that only the democrat and republican parties show significant sized 
+bars on this chart. The other parties did not receive nearly as many 
+contributions. There are very tiny bars centered around the 100 mark, but the 
+major players in this comparison are the republican and democrat parties. 
+Between these two, it is clear that the democrat party received a larger number 
+of contributions at a lower amount, and the republican contribution amounts peak 
+at a higher value. Both plots are normally-shaped after performing the log10 
+scale transformation along the x axis. 
 
 ### How many unique contributors were there in 2016?
-Let's look at the number of unique contributors in this dataset. We can do this by using the 'unique' method and passing in a list of qualifiers for a unique entry such as contributor name, city, zip code, employer, and occupation. Then we can calculate the length of this new reduced data frame to see the number of unique contributors. One thing of note, there isn't an ID field associated with the contributor. It is possible that multiple people with the exact same attributes exist, but this occurrence should be rare and I'm noting the risk. It would be nice if the dataset had a unique ID attribute for each contributor.
+Let's look at the number of unique contributors in this dataset. We can do this 
+by using the 'unique' method and passing in a list of qualifiers for a unique 
+entry such as contributor name, city, zip code, employer, and occupation. Then 
+we can calculate the length of this new reduced data frame to see the number of 
+unique contributors. One thing of note, there isn't an ID field associated with 
+the contributor. It is possible that multiple people with the exact same 
+attributes exist, but this occurrence should be rare and I'm noting the risk. It 
+would be nice if the dataset had a unique ID attribute for each contributor.
 
 ```{r echo=TRUE, unique_contributors}
-length(unique(cc[c("contbr_nm", "contbr_zip", "contbr_employer", "contbr_occupation")])$contbr_nm)
+length(unique(cc[c("contbr_nm", 
+                   "contbr_zip", 
+                   "contbr_employer", 
+                   "contbr_occupation")
+                ])$contbr_nm)
 ```
-There are around 27 thousand unique contributors in this dataset. That means many people must have donated multiple times in order to reach the roughly 120 thousand contributions that was calculated earlier.
+There are around 27 thousand unique contributors in this dataset. That means 
+many people must have donated multiple times in order to reach the roughly 120 
+thousand contributions that was calculated earlier.
 
 ### Where are the contributors located? 
-Let's take a look at the locations where the contributions were located. I'll plot the latitude and logitude coordinates on a state map to show the locations of each contribution. I used "map_data" and "us.cities" databases to create the underlying state and city locations.
+Let's take a look at the locations where the contributions were located. I'll 
+plot the latitude and logitude coordinates on a state map to show the locations 
+of each contribution. I used "map_data" and "us.cities" databases to create the 
+underlying state and city locations.
 
 ```{r echo=TRUE, contributor_locations}
 # Get the map data for North Carolina
@@ -435,70 +638,147 @@ nc_cities <- subset(us.cities, country.etc == "NC")
 # Do a string replace to remove "NC" from city names
 nc_cities$name <- gsub(" NC", "", nc_cities$name)
 
-# Plot the map of the state and overlay city locations, city names, contribution locations
+# Plot the map of the state and overlay contribution locations
 ggplot() +
-  geom_polygon(data = nc, aes(x = long, y = lat, group = group), colour = "white", fill = "#AED6F1") +
-  geom_point(data = cc, aes(x = longitude, y = latitude), alpha = 1/110, colour = "#ABEBC6", shape = 16, size = 2) +
-  geom_point(data = nc_cities, aes(x = long, y = lat), color = "white", shape = 18) +
+  # State Outline
+  geom_polygon(data = nc, 
+               colour = "white", 
+               fill = "#AED6F1",
+               aes(x = long, y = lat, group = group)) +
+  # City Points
+  geom_point(data = nc_cities, 
+             color = "white", 
+             shape = 18,
+             aes(x = long, y = lat)) +
+  # City Names
   geom_text(data = subset(nc_cities, 
                           name == "Asheville"  | 
                           name == "Charlotte"  | 
                           name == "Raleigh"    | 
                           name == "Greensboro" |
                           name == "Wilmington"), 
-            hjust = 0.5, vjust = -0.5, aes(x = long, y = lat, label = name), colour = "#424949", size = 5, fontface = "bold") +
+            hjust = 0.5, 
+            vjust = -0.5, 
+            colour = "#424949", 
+            size = 5, 
+            fontface = "bold",
+            aes(x = long, y = lat, label = name)) +
+  # Contribution Locations
+  geom_point(data = cc, 
+             alpha = 1/110, 
+             colour = "#ABEBC6", 
+             shape = 16, 
+             size = 2,
+             aes(x = longitude, y = latitude)) +
+  # Fix Aspect Ratio of Map
   coord_fixed() +
-  ggtitle("Contribution Locations")
+  ggtitle("Contribution Locations") +
+  guides(fill=guide_legend(title="Contributor"))
 ```
 
-Looking at the plot, we can see the clusters of contributions around the most populated cities. One thing that surprised me was that there were more rural contributions than I expected. Let's look at the same plot again, but color the contribution locations with the party affiliation. 
+Looking at the plot, we can see the clusters of contributions around the most 
+populated cities. One thing that surprised me was that there were more rural 
+contributions than I expected. Let's look at the same plot again, but color the 
+contribution locations with the party affiliation. 
 
 ```{r echo=TRUE, contributor_locations_party}
-# Plot the map of the state and overlay city locations, city names, contribution locations but have separate plots for each party subset
+# Plot the two party maps of contribution locations
 p1 <- ggplot() +
-  geom_polygon(data = nc, aes(x = long, y = lat, group = group), colour = "black", fill = "white") +
-  geom_point(data = subset(cc, cand_party == "democrat"   ), aes(x = longitude, y = latitude), alpha = 1/110, colour = "#3498DB", shape = 16, size = 5) +
-  geom_point(data = nc_cities, aes(x = long, y = lat), color = "white", shape = 18) +
+  # State Outline
+  geom_polygon(data = nc, 
+               aes(x = long, y = lat, group = group), 
+               colour = "black", 
+               fill = "white") +
+  # City Points
+  geom_point(data = nc_cities, 
+             aes(x = long, y = lat), 
+             color = "white", 
+             shape = 18) +
+  # City Names
   geom_text(data = subset(nc_cities, 
                           name == "Asheville"  | 
                           name == "Charlotte"  | 
                           name == "Raleigh"    | 
                           name == "Greensboro" |
                           name == "Wilmington"), 
-            hjust = 0.5, vjust = -0.5, aes(x = long, y = lat, label = name), colour = "black", size = 5, fontface = "bold") +
+            hjust = 0.5, 
+            vjust = -0.5, 
+            aes(x = long, y = lat, label = name), 
+            colour = "black", 
+            size = 5, 
+            fontface = "bold") +
+  # Contributor Locations
+  geom_point(data = subset(cc, cand_party == "democrat"), 
+             aes(x = longitude, y = latitude), 
+             alpha = 1/110, 
+             colour = "#3498DB", 
+             shape = 16, 
+             size = 5) +
+  # Fix Aspect Ratio of Map
   coord_fixed() +
   ggtitle("Democrat Contributions")
 
 p2 <- ggplot() +
-  geom_polygon(data = nc, aes(x = long, y = lat, group = group), colour = "black", fill = "white") +
-  geom_point(data = subset(cc, cand_party == "republican"   ), aes(x = longitude, y = latitude), alpha = 1/110, colour = "#E74C3C", shape = 16, size = 5) +
-  geom_point(data = nc_cities, aes(x = long, y = lat), color = "white", shape = 18) +
+  # State Outline
+  geom_polygon(data = nc, 
+               aes(x = long, y = lat, group = group), 
+               colour = "black", 
+               fill = "white") +
+  # City Points
+  geom_point(data = nc_cities, 
+             aes(x = long, y = lat), 
+             color = "white", 
+             shape = 18) +
+  # City Names
   geom_text(data = subset(nc_cities, 
                           name == "Asheville"  | 
                           name == "Charlotte"  | 
                           name == "Raleigh"    | 
                           name == "Greensboro" |
                           name == "Wilmington"), 
-            hjust = 0.5, vjust = -0.5, aes(x = long, y = lat, label = name), colour = "black", size = 5, fontface = "bold") +
+            hjust = 0.5, 
+            vjust = -0.5, 
+            aes(x = long, y = lat, label = name), 
+            colour = "black", 
+            size = 5, 
+            fontface = "bold") +
+  # Contributor Locations
+  geom_point(data = subset(cc, cand_party == "republican"), 
+             aes(x = longitude, y = latitude), 
+             alpha = 1/110, 
+             colour = "#E74C3C", 
+             shape = 16, 
+             size = 5) +
+  # Fix Aspect Ratio of Map
   coord_fixed() +
   ggtitle("Republican Contributions")
 
 grid.arrange(p1, p2, ncol = 1)
 ```
 
-These two plots don't show much difference between republican and democrat contributor locations. The democrat contributions do seem to be slightly more concentrated in Asheville as one discernible difference.
+These two plots don't show much difference between republican and democrat 
+contributor locations. The democrat contributions do seem to be slightly more 
+concentrated in Asheville as one discernible difference.
 
 ### What are the contributor occupations?
-Let's take a look at the occupations next. Let's see how many unique occupations contributed to the presidential campaigns. I'll follow the same process as with the unique contributors.
+Let's take a look at the occupations next. Let's see how many unique occupations 
+contributed to the presidential campaigns. I'll follow the same process as with 
+the unique contributors.
 
 ```{r echo=TRUE, unique_occupations}
 length(unique(cc[c("contbr_occupation")])$contbr_occupation)
 ```
 
-It looks like there are just under 5 thousand occupations reported in this dataset. That's a lot of occupations and I'll need to subset this data when plotting to focus on the more common professions. Let's look at the top 10 occupations that contributed to presidential candidates.
+It looks like there are just under 5 thousand occupations reported in this 
+dataset. That's a lot of occupations and I'll need to subset this data when 
+plotting to focus on the more common professions. Let's look at the top 10 
+occupations that contributed to presidential candidates.
 
 ```{r echo=FALSE, occupations_plot}
-ggplot(data = filter(cc, cc$contbr_occupation %in% head(top_contributing_occupations$contbr_occupation, 10)),
+# Top 10 Contributing Occupations
+ggplot(data = filter(cc, 
+                     cc$contbr_occupation %in% 
+                     head(top_contrib_occupations$contbr_occupation, 10)),
        aes(x = contbr_occupation)) +
   geom_bar(fill = I('#F79429'), color = I('black')) +
   xlab("Top 10 Contributor Occupations") +
@@ -506,7 +786,11 @@ ggplot(data = filter(cc, cc$contbr_occupation %in% head(top_contributing_occupat
         axis.text.x = element_text(angle=45, hjust=1))
 ```
 
-We can see the top occupation that contributed to candidates was retired people. It is surprising to me that the top two listed here are "retired" and "unemployed" citizens. I would think the top contributors would be working and in highly-paid professions. Let's now break this down and show top contributors for each party to see if there is a difference than the aggregate.
+We can see the top occupation that contributed to candidates was retired people. 
+It is surprising to me that the top two listed here are "retired" and 
+"unemployed" citizens. I would think the top contributors would be working and 
+in highly-paid professions. Let's now break this down and show top contributors 
+for each party to see if there is a difference than the aggregate.
 
 ```{r echo=FALSE, occupations_parties_plot}
 # Create a data frame for the democrat contributors in descending order of count
@@ -515,20 +799,28 @@ democrat_occupations <- subset(cc, cand_party == "democrat") %>%
   summarise(n = n()) %>%
   arrange(desc(n))
 
-p1 <- ggplot(data = subset(cc, contbr_occupation %in% head(democrat_occupations$contbr_occupation, 10) & cand_party == "democrat"),
+# Top Democrat Contributing Occupations
+p1 <- ggplot(data = subset(cc, 
+                           contbr_occupation %in% 
+                           head(democrat_occupations$contbr_occupation, 10) & 
+                           cand_party == "democrat"),
        aes(x = contbr_occupation)) +
   geom_bar(fill = I('#3498DB'), color = I('black')) +
   xlab("Democrat Occupations") +
   theme(text = element_text(size=16),
         axis.text.x = element_text(angle=45, hjust=1))
 
-# Create a data frame for the republican contributors in descending order of count
+# Create data frame for republican contributors in descending order of count
 republican_occupations <- subset(cc, cand_party == "republican") %>%
   group_by(contbr_occupation) %>%
   summarise(n = n()) %>%
   arrange(desc(n))
 
-p2 <- ggplot(data = subset(cc, contbr_occupation %in% head(top_contributing_occupations$contbr_occupation, 10) & cand_party == "republican"),
+# Top Republican Contributing Occupations
+p2 <- ggplot(data = subset(cc, 
+                           contbr_occupation %in% 
+                           head(top_contrib_occupations$contbr_occupation, 10) & 
+                           cand_party == "republican"),
        aes(x = contbr_occupation)) +
   geom_bar(fill = I('#E74C3C'), color = I('black')) +
   xlab("Republican Occupations") +
@@ -538,23 +830,31 @@ p2 <- ggplot(data = subset(cc, contbr_occupation %in% head(top_contributing_occu
 grid.arrange(p1, p2, ncol = 2)
 ```
 
-We can see that retired people made the most contributions by far to both democrat and republican candidates. There is also another very large population of unemployed contributors to democratic candidates. Let's remove these non-occupations from both plots and re-plot to see the differences in other occupations more clearly.
+We can see that retired people made the most contributions by far to both 
+democrat and republican candidates. There is also another very large population 
+of unemployed contributors to democratic candidates. Let's remove these 
+non-occupations from both plots and re-plot to see the differences in other 
+occupations more clearly.
 
 ```{r echo=FALSE, occupations_parties_plot_no_retired}
-p1 <- ggplot(data = subset(cc, contbr_occupation %in% head(democrat_occupations$contbr_occupation, 12) & 
-                               cand_party == "democrat" &
-                               contbr_occupation != "RETIRED" &
-                               contbr_occupation != "NOT EMPLOYED"),
+p1 <- ggplot(data = subset(cc, 
+                           contbr_occupation %in% 
+                           head(democrat_occupations$contbr_occupation, 12) & 
+                           cand_party == "democrat" &
+                           contbr_occupation != "RETIRED" &
+                           contbr_occupation != "NOT EMPLOYED"),
        aes(x = contbr_occupation)) +
   geom_bar(fill = I('#3498DB'), color = I('black')) +
   xlab("Democrat Occupations") +
   theme(text = element_text(size=16),
         axis.text.x = element_text(angle=45, hjust=1))
 
-p2 <- ggplot(data = subset(cc, contbr_occupation %in% head(top_contributing_occupations$contbr_occupation, 12) & 
-                               cand_party == "republican" &
-                               contbr_occupation != "RETIRED" &
-                               contbr_occupation != "NOT EMPLOYED"),
+p2 <- ggplot(data = subset(cc, 
+                           contbr_occupation %in% 
+                           head(top_contrib_occupations$contbr_occupation, 12) & 
+                           cand_party == "republican" &
+                           contbr_occupation != "RETIRED" &
+                           contbr_occupation != "NOT EMPLOYED"),
        aes(x = contbr_occupation)) +
   geom_bar(fill = I('#E74C3C'), color = I('black')) +
   xlab("Republican Occupations") +
@@ -564,33 +864,49 @@ p2 <- ggplot(data = subset(cc, contbr_occupation %in% head(top_contributing_occu
 grid.arrange(p1, p2, ncol = 2)
 ```
 
-These plots show the top 10 contributors to the democratic and republican candidates, with retired and unemployed contributors removed from the plots. We can see a big difference between the amount of contributions between the two plots. It is interesting that physicians, professors, and attorneys are the top contributors for democratic candidates, whereas homemakers and sales associates top the chart on the republican plot.
+These plots show the top 10 contributors to the democratic and republican 
+candidates, with retired and unemployed contributors removed from the plots. We 
+can see a big difference between the amount of contributions between the two 
+plots. It is interesting that physicians, professors, and attorneys are the top 
+contributors for democratic candidates, whereas homemakers and sales associates 
+top the chart on the republican plot.
 
 ## Final Plots and Summary
-The final question I would like to explore is how did gender factor into North Carolina campaign contributions in 2016. 
+The final question I would like to explore is how did gender factor into North 
+Carolina campaign contributions in 2016. 
 
-In 1872, Victoria Woodhull became the first female presidential candidate. Her candidacy preceded suffrage for women in the U.S. In 2016, Hillary Clinton became the first female presidential candidate nominated by a major party, namely the Democrats. This was a historical year and I am curious as to how the gender of a major candidate was supported by the genders of donors. First, let's look at the contribution and contribution amounts broken down by gender.
+In 1872, Victoria Woodhull became the first female presidential candidate. Her 
+candidacy preceded suffrage for women in the U.S. In 2016, Hillary Clinton 
+became the first female presidential candidate nominated by a major party, 
+namely the Democrats. This was a historical year and I am curious as to how the 
+gender of a major candidate was supported by the genders of donors. First, let's 
+look at the contribution and contribution amounts broken down by gender.
 
 ```{r echo=FALSE, gender_contributions}
 p1 <- ggplot(data = cc, aes(x = contbr_gender)) +
-  geom_bar(aes(fill = contbr_gender)) +
+  geom_bar(aes(fill = contbr_gender), color = "black") +
   xlab("Contributor Gender") +
   ylab("Contributions") +
   ggtitle("Contributions by Gender") +
-  theme(text = element_text(size=12))
+  theme(text = element_text(size=12)) +
+  guides(fill=guide_legend(title="Contributor Gender"))
 
-p2 <- ggplot(data = subset(cc, cc$contb_receipt_amt <= 2700), aes(x = contbr_gender, y = contb_receipt_amt)) +
-  scale_y_log10() +
+p2 <- ggplot(data = subset(cc, cc$contb_receipt_amt <= 2700), 
+             aes(x = contbr_gender, y = contb_receipt_amt)) +
+  scale_y_log10(breaks = c(1, 3, 10, 30, 100, 300, 1000)) +
   geom_boxplot(aes(fill = contbr_gender)) +
   xlab("Contributor Gender") +
   ylab("Contribution Amounts") +
-  ggtitle("Contribution Amounts by Gender") +
-  theme(text = element_text(size=12))
+  ggtitle("Contribution Amounts(log10) by Gender") +
+  theme(text = element_text(size=12)) +
+  guides(fill=guide_legend(title="Contributor Gender"))
 
 grid.arrange(p1, p2, ncol = 2)
 ```
 
-The total number of male and female contributors look almost equal, but male contributors donated in slightly larger amounts. Let's see what the average contribution amount was for each gender.
+The total number of male and female contributors look almost equal, but male 
+contributors donated in slightly larger amounts. Let's see what the average 
+contribution amount was for each gender.
 
 ```{r echo=FALSE, average_contribution_amount_genders}
 # Group by gender then calculate the mean on the contribution amount
@@ -599,40 +915,64 @@ cc %>%
   summarise(average_contribution = mean(contb_receipt_amt))
 ```
 
-This result shows that females contributed $87 on average, whereas males contributed $119 on average in 2016. Let's next look to see if there were a disproportionate amount of contributions to each candidate gender.
+This result shows that females contributed $87 on average, whereas males 
+contributed $119 on average in 2016. Let's next look to see if there were a 
+disproportionate amount of contributions to each candidate gender.
 
 ```{r echo=FALSE, gender_contributions_to_candidates}
 ggplot() +
-  geom_bar(data = subset(cc, contbr_gender == "female"), aes(x = contbr_gender, fill = cand_gender), width = 0.25, position="dodge") +
-  geom_bar(data = subset(cc, contbr_gender == "male"), aes(x = contbr_gender, fill = cand_gender), width = 0.25, position="dodge") +
+  geom_bar(data = subset(cc, contbr_gender == "female"), 
+           aes(x = contbr_gender, fill = cand_gender), 
+           width = 0.25, 
+           position="dodge",
+           color = "black") +
+  geom_bar(data = subset(cc, contbr_gender == "male"), 
+           aes(x = contbr_gender, fill = cand_gender), 
+           width = 0.25, 
+           position="dodge",
+           color = "black") +
   xlab("Contributor Gender") +
   ylab("Contributions") +
-  ggtitle("Contributions to Candidates by Gender")
+  ggtitle("Contributions to Candidates by Gender") +
+  guides(fill=guide_legend(title="Candidate Gender"))
 ```
 
-There is a big difference here. Female contributors donated to female candidates slightly more often than male candidates, however male contributors donated primarily to male candidates. There were only 3 prominent female candidates out of 23 total candidates. There does seem to be a disproportionate amount of contributions to the female candidates and I think this is due to the female democratic front-running candidate Hillary Clinton. Let's see if female contributors donated to Hillary Clinton more often than male contributors.
+There is a big difference here. Female contributors donated to female candidates 
+slightly more often than male candidates, however male contributors donated 
+primarily to male candidates. There were only 3 prominent female candidates out 
+of 23 total candidates. There does seem to be a disproportionate amount of 
+contributions to the female candidates and I think this is due to the female 
+democratic front-running candidate Hillary Clinton. Let's see if female 
+contributors donated to Hillary Clinton more often than male contributors.
 
 ```{r echo=FALSE, gender_contributions_to_hillary}
 ggplot() +
-  geom_bar(data = subset(cc, table(cand_last_nm)[cand_last_nm] > 1000), aes(x = cand_last_nm, fill = contbr_gender), position = "dodge") +
+  geom_bar(data = subset(cc, table(cand_last_nm)[cand_last_nm] > 1000), 
+           aes(x = cand_last_nm, fill = contbr_gender), 
+           position = "dodge",
+           color = "black") +
   xlab("Candidate") +
   ggtitle("Hillary Contributions by Gender") +
   theme(text = element_text(size=12),
-        axis.text.x = element_text(angle=45, hjust=1))
+        axis.text.x = element_text(angle=45, hjust=1)) +
+  guides(fill=guide_legend(title="Contributor Gender"))
 ```
 
-This shows that in fact Hillary Clinton received the largest amount of female contributions among the candidates in 2016. Of the top six candidates here, she is the only on to have a majority of contributions by female contributors. Let's look at the Hillary Clinton supporters' occupations broken down by gender next.
+This shows that in fact Hillary Clinton received the largest amount of female 
+contributions among the candidates in 2016. Of the top six candidates here, she 
+is the only on to have a majority of contributions by female contributors. Let's 
+look at the Hillary Clinton supporters' occupations broken down by gender next.
 
 ```{r echo=FALSE, hillary_contributor_occupations}
 # Calculate the top 10 male Hillary Clinton supporter occupations
-clinton_male_contributor_occupations <- subset(cc, cc$contbr_gender == "male") %>%
+clinton_male_contbr_occ <- subset(cc, cc$contbr_gender == "male") %>%
   group_by(contbr_occupation) %>%
   summarise(n = n()) %>%
   arrange(desc(n)) %>%
   head(10)
 
 # Calculate the top 10 female Hillary Clinton supporter occupations
-clinton_female_contributor_occupations <- subset(cc, cc$contbr_gender == "female") %>%
+clinton_female_contbr_occ <- subset(cc, cc$contbr_gender == "female") %>%
   group_by(contbr_occupation) %>%
   summarise(n = n()) %>%
   arrange(desc(n)) %>%
@@ -640,47 +980,92 @@ clinton_female_contributor_occupations <- subset(cc, cc$contbr_gender == "female
 
 ggplot() +
   geom_bar(data = subset(cc, cc$cand_last_nm == "Clinton" & 
-                             (cc$contbr_occupation %in% clinton_female_contributor_occupations$contbr_occupation |
-                              cc$contbr_occupation %in% clinton_male_contributor_occupations$contbr_occupation)),
-           aes(x = contbr_occupation, fill = contbr_gender), position = "dodge") +
+                             (cc$contbr_occupation %in% 
+                                clinton_female_contbr_occ$contbr_occupation |
+                              cc$contbr_occupation %in% 
+                                clinton_male_contbr_occ$contbr_occupation)),
+           aes(x = contbr_occupation, fill = contbr_gender), 
+           position = "dodge",
+           color = "black") +
   xlab("Hillary Supporter Occupation") +
   ggtitle("Hillary Supporter Occupations by Gender") +
   theme(text = element_text(size=12),
-        axis.text.x = element_text(angle=45, hjust=1))
+        axis.text.x = element_text(angle=45, hjust=1)) +
+  guides(fill=guide_legend(title="Contributor Gender"))
 ```
 
-Hillary Clinton supporters of the top contributing occupations were mostly female. There was a large amount of retired Clinton supporters that was nearly double the retired male supporters. Let's take a look at one last plot to show contribution amounts broken down by gender.
+Hillary Clinton supporters of the top contributing occupations were mostly 
+female. There was a large amount of retired Clinton supporters that was nearly 
+double the retired male supporters. Let's take a look at one last plot to show 
+contribution amounts broken down by gender.
 
 ```{r echo=FALSE, gender_contribution_amounts_to_candidates}
 ggplot() +
   geom_boxplot(data = subset(cc, cc$contb_receipt_amt <= 2700 & 
                                  table(cand_last_nm)[cand_last_nm] > 1000), 
-               aes(x = cand_last_nm, y = contb_receipt_amt, fill = contbr_gender), position = "dodge") +
-  scale_y_log10() +
+               aes(x = cand_last_nm, y = contb_receipt_amt, fill = contbr_gender), 
+               position = "dodge") +
+  scale_y_log10(breaks = c(1, 3, 10, 30, 100, 300, 1000)) +
   xlab("Candidate") +
   ylab("Contribution Amounts") +
-  ggtitle("Candidate Contribution Amounts by Gender") +
+  ggtitle("Candidate Contribution Amounts(log10) by Gender") +
   theme(text = element_text(size=12),
-        axis.text.x = element_text(angle=45, hjust=1))
+        axis.text.x = element_text(angle=45, hjust=1)) +
+  guides(fill=guide_legend(title="Contributor Gender"))
 ```
 
-This plot shows the contribution amounts broken down by gender for each of the top candidates. We can see the democrat candidates Clinton and Sanders received lower contribution amounts relative to the other republican contribution amounts. We can also see the breakdown of male and female contributors here. Female contributors gave slightly more for Clinton and Trump, and significantly more for Cruz and Rubio.
+This plot shows the contribution amounts broken down by gender for each of the 
+top candidates. We can see the democrat candidates Clinton and Sanders received 
+lower contribution amounts relative to the other republican contribution amounts. 
+We can also see the breakdown of male and female contributors here. Female 
+contributors gave slightly more for Clinton and Trump, and significantly more for 
+Cruz and Rubio.
 
 ------
 
 ## Reflection
 
-The 2016 presidential election year was a historic year. Hillary Clinton became the first major party presidential nominee. In this analysis, we looked at a lot within the 2016 presidential contributions dataset for North Carolina and I focused in on some relationships around gender and political party affiliation. 
+The 2016 presidential election year was a historic year. Hillary Clinton became 
+the first major party presidential nominee. In this analysis, we looked at a lot 
+within the 2016 presidential contributions dataset for North Carolina and I 
+focused in on some relationships around gender and political party affiliation. 
 
-Politically speaking, North Carolina has been said to be a "purple state" referring to the combination of colors (red and blue) which represent the democrat and republican parties. After looking at some of the data from the 2016 campaign contributions I will agree. There were many differences in the data corresponding to each political party, but the total money contributed to each party was very similar. The democrat candidates received more, but smaller dollar amount contributions than the republicans. The republican candidates received fewer, but larger dollar amount contributions. Looking at the contributor locations on the map of the state we saw that there wasn't a big difference in any area of the state. Both plots looked similar and both party candidates received contributions from cities as well as rural areas. One relationship that was seen was the female contributors support for Hillary Clinton in 2016. Clinton received a majority of female contributors over the other candidates across both parties.
+Politically speaking, North Carolina has been said to be a "purple state" 
+referring to the combination of colors (red and blue) which represent the 
+democrat and republican parties. After looking at some of the data from the 2016 
+campaign contributions I will agree. There were many differences in the data 
+corresponding to each political party, but the total money contributed to each 
+party was very similar. The democrat candidates received more, but smaller 
+dollar amount contributions than the republicans. The republican candidates 
+received fewer, but larger dollar amount contributions. Looking at the 
+contributor locations on the map of the state we saw that there wasn't a big 
+difference in any area of the state. Both plots looked similar and both party 
+candidates received contributions from cities as well as rural areas. One 
+relationship that was seen was the female contributors support for Hillary 
+Clinton in 2016. Clinton received a majority of female contributors over the 
+other candidates across both parties.
 
-This analysis only looked at a brief window of time leading up to the 2016 presidential election. The relationships and figures could differ greatly if the entire campaign data was also analyzed. I spent a good amount of time cleaning several issues with the data, but I'm sure there are other bugs and overlooked issues. I also used a package to predict the gender of each contributor using a predicted birthday range. This method does not yield a definitive result and I acknowledge the possibility that the gender results are skewed accordingly.
+This analysis only looked at a brief window of time leading up to the 2016 
+presidential election. The relationships and figures could differ greatly if the 
+entire campaign data was also analyzed. I spent a good amount of time cleaning 
+several issues with the data, but I'm sure there are other bugs and overlooked 
+issues. I also used a package to predict the gender of each contributor using a 
+predicted birthday range. This method does not yield a definitive result and I 
+acknowledge the possibility that the gender results are skewed accordingly.
 
-I am happy with the results and think there is some valuable data present here. The presidential campaigns could look for relationships to target certain demographics in the next campaign in order to raise more money next time. It would also be very interesting to look at voting data compared to the campaign contribution data to see how the two are related. It is presently passed election day and the front-running candidate that received the most funds in North Carolina in 2016 did not win the election. It would be interesting to compare contributions with voting results in the future. 
+I am happy with the results and think there is some valuable data present here. 
+The presidential campaigns could look for relationships to target certain 
+demographics in the next campaign in order to raise more money next time. It 
+would also be very interesting to look at voting data compared to the campaign 
+contribution data to see how the two are related. It is presently passed 
+election day and the front-running candidate that received the most funds in 
+North Carolina in 2016 did not win the election. It would be interesting to 
+compare contributions with voting results in the future. 
   
 ## Resources
 
-* histogram plotting:   http://docs.ggplot2.org/0.9.3.1/geom_histogram.html
-* ggmap mapping:        https://github.com/dkahle/ggmap
-* map visualizations:   https://uchicagoconsulting.wordpress.com/tag/r-ggplot2-maps-visualization
-* html colors:          http://htmlcolorcodes.com
+* histogram: http://docs.ggplot2.org/0.9.3.1/geom_histogram.html
+* gmap: https://github.com/dkahle/ggmap
+* maps visualizations: 
+https://uchicagoconsulting.wordpress.com/tag/r-ggplot2-maps-visualization
+* html color codes: http://htmlcolorcodes.com
