@@ -172,6 +172,9 @@ cc <- subset(cc, cc$contbr_occupation != "INFORMATION REQUESTED" &
 # Change 'Registered Nurse' -> 'RN' to remove duplicates under a different name
 cc$contbr_occupation <- gsub("REGISTERED NURSE", "RN", cc$contbr_occupation)
 
+# Change 'C.E.O.' -> 'CEO' to remove duplicates under a different name
+cc$contbr_occupation <- gsub("C.E.O.", "CEO", cc$contbr_occupation)
+
 # Group the occupations again and show the top 20 most common
 top_contrib_occupations <- cc %>%
   group_by(contbr_occupation) %>%
@@ -279,13 +282,12 @@ Here is a plot to show the breakdown of genders among the candidates:
 
 ```{r, echo = FALSE, candidate_gender_plot_basic}
 ggplot(data = cand_gender_df, aes(x = cand_gender)) +
-  geom_dotplot(aes(fill = cand_gender), binwidth = .09) +
+  geom_dotplot(aes(fill = cand_gender), binwidth = 0.1) +
   xlab("Candidate Gender") +
-  ggtitle("Proportion of Genders Among Candidates") +
   guides(fill=guide_legend(title="Candidate Gender"))
 ```
 
-Let's repeat the same process for the contributors.
+We can visually see there are many more male candidates than female candidates. Let's gather gender data on the contributors now.
 
 ```{r echo=TRUE, contributor_gender_tidy}
 # Create a contributor gender data frame
@@ -347,12 +349,11 @@ ggplot(data = cand_df, aes(x = cand_party)) +
                                "black", 
                                I('#E74C3C'))) +
   xlab("Candidate Party") +
-  ggtitle("Proportion of Party Affiliation Among Candidates") +
   guides(fill=guide_legend(title="Candidate Party"))
 ```
 
 We can see there are far more republican candidates than any of the other major
-political parties. 
+political parties. There were only singular candidates from the green, independent, and libertarian parties who received contributions from North Carolinians in 2016.
 
 <br />
 
@@ -564,7 +565,7 @@ ggplot(data = subset(cc, contb_receipt_amt <= 2700),
        aes(x = contb_receipt_amt)) +
   geom_histogram(binwidth = 10, fill = I('#27AE60'), color = I('#27AE60')) +
   scale_x_continuous(breaks = seq(0, 3000, by = 500), 
-                     "Contributions in dollars")
+                     "Contribution Amounts in USD")
 ```
 
 We can see the majority of the contributions were well under the contribution 
@@ -585,8 +586,8 @@ ggplot() +
                                "black", 
                                I('#E74C3C'))) +
   scale_x_log10(breaks = c(1, 3, 10, 30, 100, 300, 1000)) +
-  xlab("Contributions in dollars") +
-  ggtitle("Contributions on a log10 Scale") +
+  xlab("Contribution Amounts (log10) in USD") +
+  ggtitle("Contribution Amounts by Party") +
   guides(fill=guide_legend(title="Candidate Party"))
 ```
 
@@ -682,83 +683,111 @@ contributions than I expected. Let's look at the same plot again, but color the
 contribution locations with the party affiliation. 
 
 ```{r echo=TRUE, contributor_locations_party}
-# Plot the two party maps of contribution locations
+# State outline
+state_plot <- geom_polygon(data = nc, 
+                           aes(x = long, y = lat, group = group), 
+                           colour = "black", 
+                           fill = "white")
+
+# City point locations
+city_points_plot <- geom_point(data = nc_cities, 
+                                 aes(x = long, y = lat), 
+                                 color = "white", 
+                                 shape = 18)
+
+# City names
+city_names_plot <- geom_text(data = subset(nc_cities, 
+                                           name == "Asheville"  | 
+                                           name == "Charlotte"  | 
+                                           name == "Raleigh"    | 
+                                           name == "Greensboro" |
+                                           name == "Wilmington"), 
+                             hjust = 0.5, 
+                             vjust = -0.5, 
+                             aes(x = long, y = lat, label = name), 
+                             colour = "black", 
+                             size = 5, 
+                             fontface = "bold")
+
+# Democrat locations
+dem_locations_plot <- geom_point(data = subset(cc, cand_party == "democrat"), 
+                                 aes(x = longitude, 
+                                     y = latitude, 
+                                     fill = cand_party), 
+                                 alpha = 1/110, 
+                                 colour = "#3498DB", 
+                                 shape = 16, 
+                                 size = 5)
+
+# Republican locations
+rep_locations_plot <- geom_point(data = subset(cc, cand_party == "republican"), 
+                                 aes(x = longitude, 
+                                     y = latitude, 
+                                     fill = cand_party), 
+                                 alpha = 1/110, 
+                                 colour = "#E74C3C", 
+                                 shape = 16, 
+                                 size = 5)
+
+# Override legend title and alpha
+legend_party_or <- guides(fill = guide_legend(override.aes = list(alpha = 1), 
+                                              title="Party"))
+
+# Remove whitespace around plots
+theme_no_whitespace <-  theme(axis.text.x = element_blank(),
+                              axis.ticks.x = element_blank(),
+                              axis.title.x = element_blank(),
+                              axis.text.y = element_blank(),
+                              axis.ticks.y = element_blank(),
+                              axis.title.y = element_blank(),
+                              plot.margin=unit(c(0,0,0,0), "cm"))
+
+# Remove legend and whitespace
+theme_no_legend_and_whitespace <-  theme(legend.position = "none", 
+                                         axis.text.x = element_blank(),
+                                         axis.ticks.x = element_blank(),
+                                         axis.title.x = element_blank(),
+                                         axis.text.y = element_blank(),
+                                         axis.ticks.y = element_blank(),
+                                         axis.title.y = element_blank(),
+                                         plot.margin=unit(c(0,0,0,0), "cm"))
+
+# Plot democrat locations on a map
 p1 <- ggplot() +
-  # State Outline
-  geom_polygon(data = nc, 
-               aes(x = long, y = lat, group = group), 
-               colour = "black", 
-               fill = "white") +
-  # City Points
-  geom_point(data = nc_cities, 
-             aes(x = long, y = lat), 
-             color = "white", 
-             shape = 18) +
-  # City Names
-  geom_text(data = subset(nc_cities, 
-                          name == "Asheville"  | 
-                          name == "Charlotte"  | 
-                          name == "Raleigh"    | 
-                          name == "Greensboro" |
-                          name == "Wilmington"), 
-            hjust = 0.5, 
-            vjust = -0.5, 
-            aes(x = long, y = lat, label = name), 
-            colour = "black", 
-            size = 5, 
-            fontface = "bold") +
-  # Contributor Locations
-  geom_point(data = subset(cc, cand_party == "democrat"), 
-             aes(x = longitude, y = latitude), 
-             alpha = 1/110, 
-             colour = "#3498DB", 
-             shape = 16, 
-             size = 5) +
-  # Fix Aspect Ratio of Map
+  state_plot +
+  dem_locations_plot +
+  city_points_plot +
+  city_names_plot +
   coord_fixed() +
-  ggtitle("Democrat Contributions")
+  theme_no_whitespace +
+  legend_party_or
 
 p2 <- ggplot() +
-  # State Outline
-  geom_polygon(data = nc, 
-               aes(x = long, y = lat, group = group), 
-               colour = "black", 
-               fill = "white") +
-  # City Points
-  geom_point(data = nc_cities, 
-             aes(x = long, y = lat), 
-             color = "white", 
-             shape = 18) +
-  # City Names
-  geom_text(data = subset(nc_cities, 
-                          name == "Asheville"  | 
-                          name == "Charlotte"  | 
-                          name == "Raleigh"    | 
-                          name == "Greensboro" |
-                          name == "Wilmington"), 
-            hjust = 0.5, 
-            vjust = -0.5, 
-            aes(x = long, y = lat, label = name), 
-            colour = "black", 
-            size = 5, 
-            fontface = "bold") +
-  # Contributor Locations
-  geom_point(data = subset(cc, cand_party == "republican"), 
-             aes(x = longitude, y = latitude), 
-             alpha = 1/110, 
-             colour = "#E74C3C", 
-             shape = 16, 
-             size = 5) +
-  # Fix Aspect Ratio of Map
+  state_plot +
+  rep_locations_plot +
+  city_points_plot +
+  city_names_plot +
   coord_fixed() +
-  ggtitle("Republican Contributions")
+  theme_no_whitespace +
+  legend_party_or
 
-grid.arrange(p1, p2, ncol = 1)
+p3 <- ggplot() +
+  state_plot +
+  rep_locations_plot +
+  dem_locations_plot +
+  city_points_plot +
+  coord_fixed() +
+  ggtitle("Overlay Party Contributor Locations") +
+  theme_no_legend_and_whitespace
+
+grid.arrange(p1, p2, p3, ncol = 1, top = "Contributor Locations by Party")
 ```
 
-These two plots don't show much difference between republican and democrat 
-contributor locations. The democrat contributions do seem to be slightly more 
-concentrated in Asheville as one discernible difference.
+The independent democrat and republican plots don't show much of a difference 
+and it appears that both parties have strong support in the same areas. We can 
+see this more clearly in the third plot where I overlay the locations. The third
+plot shows the there are slightly more democrat contributions around Asheville, 
+NC as the main discernible difference.
 
 ### What are the contributor occupations?
 Let's take a look at the occupations next. Let's see how many unique occupations 
@@ -781,7 +810,9 @@ ggplot(data = filter(cc,
                      head(top_contrib_occupations$contbr_occupation, 10)),
        aes(x = contbr_occupation)) +
   geom_bar(fill = I('#F79429'), color = I('black')) +
-  xlab("Top 10 Contributor Occupations") +
+  ggtitle("Top Contributer Occupations") +
+  xlab("Contributor Occupations") +
+  ylab("Number of Contributions") +
   theme(text = element_text(size=18),
         axis.text.x = element_text(angle=45, hjust=1))
 ```
@@ -792,7 +823,7 @@ It is surprising to me that the top two listed here are "retired" and
 in highly-paid professions. Let's now break this down and show top contributors 
 for each party to see if there is a difference than the aggregate.
 
-```{r echo=FALSE, occupations_parties_plot}
+```{r echo=TRUE, contributions_by_occupations_plot}
 # Create a data frame for the democrat contributors in descending order of count
 democrat_occupations <- subset(cc, cand_party == "democrat") %>%
   group_by(contbr_occupation) %>%
@@ -807,6 +838,7 @@ p1 <- ggplot(data = subset(cc,
        aes(x = contbr_occupation)) +
   geom_bar(fill = I('#3498DB'), color = I('black')) +
   xlab("Democrat Occupations") +
+  ylab("Number of Contributions") +
   theme(text = element_text(size=16),
         axis.text.x = element_text(angle=45, hjust=1))
 
@@ -824,10 +856,11 @@ p2 <- ggplot(data = subset(cc,
        aes(x = contbr_occupation)) +
   geom_bar(fill = I('#E74C3C'), color = I('black')) +
   xlab("Republican Occupations") +
+  ylab("Number of Contributions") +
   theme(text = element_text(size=16),
         axis.text.x = element_text(angle=45, hjust=1))
 
-grid.arrange(p1, p2, ncol = 2)
+grid.arrange(p1, p2, ncol = 2, top = "Top Contributor Occupations")
 ```
 
 We can see that retired people made the most contributions by far to both 
@@ -836,7 +869,7 @@ of unemployed contributors to democratic candidates. Let's remove these
 non-occupations from both plots and re-plot to see the differences in other 
 occupations more clearly.
 
-```{r echo=FALSE, occupations_parties_plot_no_retired}
+```{r echo=TRUE, contributions_by_occupations_plot_no_retired}
 p1 <- ggplot(data = subset(cc, 
                            contbr_occupation %in% 
                            head(democrat_occupations$contbr_occupation, 12) & 
@@ -846,6 +879,7 @@ p1 <- ggplot(data = subset(cc,
        aes(x = contbr_occupation)) +
   geom_bar(fill = I('#3498DB'), color = I('black')) +
   xlab("Democrat Occupations") +
+  ylab("Number of Contributions") +
   theme(text = element_text(size=16),
         axis.text.x = element_text(angle=45, hjust=1))
 
@@ -858,10 +892,11 @@ p2 <- ggplot(data = subset(cc,
        aes(x = contbr_occupation)) +
   geom_bar(fill = I('#E74C3C'), color = I('black')) +
   xlab("Republican Occupations") +
+  ylab("Number of Contributions") +
   theme(text = element_text(size=16),
         axis.text.x = element_text(angle=45, hjust=1))
 
-grid.arrange(p1, p2, ncol = 2)
+grid.arrange(p1, p2, ncol = 2, top = "Top Contributor Occupations (Limited)")
 ```
 
 These plots show the top 10 contributors to the democratic and republican 
@@ -869,25 +904,75 @@ candidates, with retired and unemployed contributors removed from the plots. We
 can see a big difference between the amount of contributions between the two 
 plots. It is interesting that physicians, professors, and attorneys are the top 
 contributors for democratic candidates, whereas homemakers and sales associates 
-top the chart on the republican plot.
+top the chart on the republican plot. Let's see which occupations made the 
+largest contribution amounts and compare this plot to the contributions plot we 
+just generated.
 
-## Final Plots and Summary
-The final question I would like to explore is how did gender factor into North 
-Carolina campaign contributions in 2016. 
+```{r echo=TRUE, contribution_amounts_by_occupations_plot}
+# Create a data frame for the democrat contributors in descending order of amount
+democrat_high_contbr <- subset(cc, cand_party == "democrat") %>%
+  group_by(contbr_occupation) %>%
+  summarise(sum_contb = sum(contb_receipt_amt),
+            n = n()) %>%
+  arrange(desc(sum_contb), desc(n))
 
-In 1872, Victoria Woodhull became the first female presidential candidate. Her 
-candidacy preceded suffrage for women in the U.S. In 2016, Hillary Clinton 
-became the first female presidential candidate nominated by a major party, 
-namely the Democrats. This was a historical year and I am curious as to how the 
-gender of a major candidate was supported by the genders of donors. First, let's 
-look at the contribution and contribution amounts broken down by gender.
+
+# Top Democrat Contributing Occupations
+p1 <- ggplot(data = head(democrat_high_contbr, 10),
+       aes(x = contbr_occupation, y = sum_contb)) +
+  geom_bar(fill = I('#3498DB'), color = I('black'), stat = "identity") +
+  scale_y_continuous(breaks = seq(0, 
+                                  max(democrat_high_contbr$sum_contb), 
+                                  max(democrat_high_contbr$sum_contb)/10),
+                     labels = comma) +
+  ylab("Total Contribution Amount in USD") +
+  xlab("Occupations") +
+  ggtitle("Democrat") +
+  theme(text = element_text(size=12),
+        axis.text.x = element_text(angle=45, hjust=1))
+
+# Create a data frame for the republican contributors in descending order of amount
+republican_high_contbr <- subset(cc, cand_party == "republican") %>%
+  group_by(contbr_occupation) %>%
+  summarise(sum_contb = sum(contb_receipt_amt),
+            n = n()) %>%
+  arrange(desc(sum_contb), desc(n))
+
+
+# Top republican Contributing Occupations
+p2 <- ggplot(data = head(republican_high_contbr, 10),
+       aes(x = contbr_occupation, y = sum_contb)) +
+  geom_bar(fill = I('#E74C3C'), color = I('black'), stat = "identity") +
+  scale_y_continuous(breaks = seq(0, 
+                                  max(republican_high_contbr$sum_contb), 
+                                  max(republican_high_contbr$sum_contb)/10),
+                     labels = comma) +
+  ylab("Total Contribution Amount in USD") +
+  xlab("Occupations") +
+  ggtitle("Republican") +
+  theme(text = element_text(size=12),
+        axis.text.x = element_text(angle=45, hjust=1))
+
+grid.arrange(p1, p2, ncol = 2, top = "Total Contribution Amounts by Occupation")
+```
+
+We can see the highest total money came from retired North Carolinians 
+in 2016 for both parties. This is surprising considering how much larger the 
+total amount is relative to the other top contributing occupations. It's also 
+surprising that the second largest amount of money for the democrats was donated 
+by unemployed contributors. 
+
+### Which gender made more contributions?
+Let's next look at gender and how it played a role in the contributions to 
+candidates. First let's see a breakdown of contributions by the contributor
+genders.
 
 ```{r echo=FALSE, gender_contributions}
 p1 <- ggplot(data = cc, aes(x = contbr_gender)) +
   geom_bar(aes(fill = contbr_gender), color = "black") +
   xlab("Contributor Gender") +
-  ylab("Contributions") +
-  ggtitle("Contributions by Gender") +
+  ylab("Number of Contributions") +
+  ggtitle("Contributions") +
   theme(text = element_text(size=12)) +
   guides(fill=guide_legend(title="Contributor Gender"))
 
@@ -896,8 +981,8 @@ p2 <- ggplot(data = subset(cc, cc$contb_receipt_amt <= 2700),
   scale_y_log10(breaks = c(1, 3, 10, 30, 100, 300, 1000)) +
   geom_boxplot(aes(fill = contbr_gender)) +
   xlab("Contributor Gender") +
-  ylab("Contribution Amounts") +
-  ggtitle("Contribution Amounts(log10) by Gender") +
+  ylab("Contribution Amounts in USD (log10)") +
+  ggtitle("Contribution Amounts") +
   theme(text = element_text(size=12)) +
   guides(fill=guide_legend(title="Contributor Gender"))
 
@@ -916,10 +1001,13 @@ cc %>%
 ```
 
 This result shows that females contributed $87 on average, whereas males 
-contributed $119 on average in 2016. Let's next look to see if there were a 
-disproportionate amount of contributions to each candidate gender.
+contributed $119 on average in 2016. 
 
-```{r echo=FALSE, gender_contributions_to_candidates}
+### Which gender received more contributions from either gender?
+Let's next look to see if there were a disproportionate amount of contributions 
+to each candidate gender.
+
+```{r echo=FALSE, gender_contributions_plot}
 ggplot() +
   geom_bar(data = subset(cc, contbr_gender == "female"), 
            aes(x = contbr_gender, fill = cand_gender), 
@@ -932,8 +1020,8 @@ ggplot() +
            position="dodge",
            color = "black") +
   xlab("Contributor Gender") +
-  ylab("Contributions") +
-  ggtitle("Contributions to Candidates by Gender") +
+  ylab("Number of Contributions") +
+  ggtitle("Contributions by Gender") +
   guides(fill=guide_legend(title="Candidate Gender"))
 ```
 
@@ -942,26 +1030,58 @@ slightly more often than male candidates, however male contributors donated
 primarily to male candidates. There were only 3 prominent female candidates out 
 of 23 total candidates. There does seem to be a disproportionate amount of 
 contributions to the female candidates and I think this is due to the female 
-democratic front-running candidate Hillary Clinton. Let's see if female 
-contributors donated to Hillary Clinton more often than male contributors.
+democratic front-running candidate Hillary Clinton. 
 
-```{r echo=FALSE, gender_contributions_to_hillary}
+### Which candidate received more contributions from either gender?
+Let's take a look at a plot of all the candidates' coontributions broken down
+by gender to see if there are any unusual relationships.
+
+```{r echo=FALSE, gender_contributions_to_candidates}
 ggplot() +
   geom_bar(data = subset(cc, table(cand_last_nm)[cand_last_nm] > 1000), 
            aes(x = cand_last_nm, fill = contbr_gender), 
            position = "dodge",
            color = "black") +
   xlab("Candidate") +
-  ggtitle("Hillary Contributions by Gender") +
+  ylab("Number of Contributions") +
+  ggtitle("Candidate Contributions by Contributor Gender") +
   theme(text = element_text(size=12),
         axis.text.x = element_text(angle=45, hjust=1)) +
   guides(fill=guide_legend(title="Contributor Gender"))
 ```
 
-This shows that in fact Hillary Clinton received the largest amount of female 
+This shows that Hillary Clinton received the largest amount of female 
 contributions among the candidates in 2016. Of the top six candidates here, she 
-is the only on to have a majority of contributions by female contributors. Let's 
-look at the Hillary Clinton supporters' occupations broken down by gender next.
+is the only candidate to have a majority of female contributors. Let's look at 
+contribution amounts broken down by gender next to see if the most number of 
+contributions also resulted in the most total money contributed.
+
+```{r echo=FALSE, gender_contribution_amounts_to_candidates}
+ggplot() +
+  geom_boxplot(data = subset(cc, cc$contb_receipt_amt <= 2700 & 
+                                 table(cand_last_nm)[cand_last_nm] > 1000), 
+               aes(x = cand_last_nm, y = contb_receipt_amt, fill = contbr_gender), 
+               position = "dodge") +
+  scale_y_log10(breaks = c(1, 3, 10, 30, 100, 300, 1000, 3000)) +
+  xlab("Candidate") +
+  ylab("Contribution Amounts in USD") +
+  ggtitle("Candidate Contribution Amounts by Gender") +
+  theme(text = element_text(size=12),
+        axis.text.x = element_text(angle=45, hjust=1)) +
+  guides(fill=guide_legend(title="Contributor Gender"))
+```
+
+This plot shows the contribution amounts broken down by gender for each of the 
+top candidates. We can see the democrat candidates Clinton and Sanders received 
+lower contribution amounts relative to the other republican contribution amounts. 
+We can also see the breakdown of male and female contributors here. Female 
+contributors gave slightly less to nearly every candidate listed. Ben Carson was 
+the exception with identical 1st and 3rd quartiles and median values for female 
+and male contribution amounts.
+
+### Which occupations contributed to the Clinton campaign the most?
+Let's look at the Hillary Clinton supporters' occupations broken down by gender 
+next.
 
 ```{r echo=FALSE, hillary_contributor_occupations}
 # Calculate the top 10 male Hillary Clinton supporter occupations
@@ -988,38 +1108,104 @@ ggplot() +
            position = "dodge",
            color = "black") +
   xlab("Hillary Supporter Occupation") +
-  ggtitle("Hillary Supporter Occupations by Gender") +
+  ylab("Number of Contributions") +
+  ggtitle("Hillary Contributions by Occupations and Gender") +
   theme(text = element_text(size=12),
         axis.text.x = element_text(angle=45, hjust=1)) +
   guides(fill=guide_legend(title="Contributor Gender"))
 ```
 
-Hillary Clinton supporters of the top contributing occupations were mostly 
-female. There was a large amount of retired Clinton supporters that was nearly 
-double the retired male supporters. Let's take a look at one last plot to show 
-contribution amounts broken down by gender.
+Hillary Clinton had a very large contributor base that was female and retired. 
 
-```{r echo=FALSE, gender_contribution_amounts_to_candidates}
+## Final Plots and Summary
+#### Plot 1: Highest Contributing Occupations
+```{r echo=FALSE, target_the_high_donors_plot}
+# Top Democrat Contributing Occupations
+p1 <- ggplot(data = head(democrat_high_contbr, 10),
+       aes(x = contbr_occupation, y = sum_contb)) +
+  geom_bar(fill = I('#3498DB'), color = I('black'), stat = "identity") +
+  scale_y_continuous(breaks = seq(0, 
+                                  max(democrat_high_contbr$sum_contb), 
+                                  max(democrat_high_contbr$sum_contb)/10),
+                     labels = comma) +
+  ylab("Total Contribution Amount in USD") +
+  xlab("Occupations") +
+  ggtitle("Democrat") +
+  theme(text = element_text(size=12),
+        axis.text.x = element_text(angle=45, hjust=1))
+
+# Top republican Contributing Occupations
+p2 <- ggplot(data = head(republican_high_contbr, 10),
+       aes(x = contbr_occupation, y = sum_contb)) +
+  geom_bar(fill = I('#E74C3C'), color = I('black'), stat = "identity") +
+  scale_y_continuous(breaks = seq(0, 
+                                  max(republican_high_contbr$sum_contb), 
+                                  max(republican_high_contbr$sum_contb)/10),
+                     labels = comma) +
+  ylab("Total Contribution Amount in USD") +
+  xlab("Occupations") +
+  ggtitle("Republican") +
+  theme(text = element_text(size=12),
+        axis.text.x = element_text(angle=45, hjust=1))
+
+grid.arrange(p1, p2, ncol = 2, top = "Total Contribution Amounts by Occupation")
+```
+In this plot we can see the breakdown by top contributing occupations for each party. There is some very valuable information in this plot in relation to which contributor occupations donated the most money. It was very surprising to see retired contributors as the largest donors relative to the other occupations. Using this plot, parties could target their future fundraising efforts to contributors that are more likely to donate.
+
+#### Plot 2: Women Supported the first woman nominee
+```{r echo=FALSE, women_support_plot}
 ggplot() +
-  geom_boxplot(data = subset(cc, cc$contb_receipt_amt <= 2700 & 
-                                 table(cand_last_nm)[cand_last_nm] > 1000), 
-               aes(x = cand_last_nm, y = contb_receipt_amt, fill = contbr_gender), 
-               position = "dodge") +
-  scale_y_log10(breaks = c(1, 3, 10, 30, 100, 300, 1000)) +
+  geom_bar(data = subset(cc, table(cand_last_nm)[cand_last_nm] > 1000), 
+           aes(x = cand_last_nm, fill = contbr_gender), 
+           position = "dodge",
+           color = "black") +
   xlab("Candidate") +
-  ylab("Contribution Amounts") +
-  ggtitle("Candidate Contribution Amounts(log10) by Gender") +
+  ylab("Number of Contributions") +
+  ggtitle("Candidate Contributions by Contributor Gender") +
   theme(text = element_text(size=12),
         axis.text.x = element_text(angle=45, hjust=1)) +
   guides(fill=guide_legend(title="Contributor Gender"))
 ```
 
-This plot shows the contribution amounts broken down by gender for each of the 
-top candidates. We can see the democrat candidates Clinton and Sanders received 
-lower contribution amounts relative to the other republican contribution amounts. 
-We can also see the breakdown of male and female contributors here. Female 
-contributors gave slightly more for Clinton and Trump, and significantly more for 
-Cruz and Rubio.
+In 1872, Victoria Woodhull became the first female presidential candidate. Her 
+candidacy preceded suffrage for women in the U.S. In 2016, Hillary Clinton 
+became the first female presidential candidate nominated by a major party, 
+namely the Democrats. By looking at the number of contributions from both genders to each of the candidates, we can see that Hillary was supported by women in a big way. Clinton received a very large number of contributions from women relative to the other candidates and I suspect the historical nature of her nomination could have been a factor.
+
+#### Plot 3: North Carolina is a "Purple state"
+```{r echo=FALSE, purple_state_plot}
+# Plot democrat locations on a map
+p1 <- ggplot() +
+  state_plot +
+  dem_locations_plot +
+  city_points_plot +
+  city_names_plot +
+  coord_fixed() +
+  theme_no_whitespace +
+  legend_party_or
+
+p2 <- ggplot() +
+  state_plot +
+  rep_locations_plot +
+  city_points_plot +
+  city_names_plot +
+  coord_fixed() +
+  theme_no_whitespace +
+  legend_party_or
+
+p3 <- ggplot() +
+  state_plot +
+  rep_locations_plot +
+  dem_locations_plot +
+  city_points_plot +
+  coord_fixed() +
+  ggtitle("Overlay Party Contributor Locations") +
+  theme_no_legend_and_whitespace
+
+grid.arrange(p1, p2, p3, ncol = 1, top = "Contributor Locations by Party")
+```
+
+A purple state refers to a swing state where both Democratic and Republican candidates receive strong support without an overwhelming majority of support for either party. Purple states are also often referred to as battleground states. In this third plot with the overlay of each party's color we can see clearly that North Carolina would fit into this category. This was some surprising information in these plots. I was surprised to see the contribution locations for both parties in the same areas as well as the amount of contributions from rural areas.
 
 ------
 
@@ -1065,7 +1251,9 @@ compare contributions with voting results in the future.
 ## Resources
 
 * histogram: http://docs.ggplot2.org/0.9.3.1/geom_histogram.html
-* gmap: https://github.com/dkahle/ggmap
+* ggmap: https://github.com/dkahle/ggmap
 * maps visualizations: 
 https://uchicagoconsulting.wordpress.com/tag/r-ggplot2-maps-visualization
 * html color codes: http://htmlcolorcodes.com
+* purple state definition: 
+https://en.wikipedia.org/wiki/Red_states_and_blue_states#Purple_states
